@@ -71,5 +71,4 @@ common people är indie. indiepop.
 if __name__ == "__main__":
     import sys
     from hnilsson.worker import main
-    __import__("pprint").pprint(CommonPeople("1").evtable)
     main(sys.argv[1], cls=CommonPeople)
