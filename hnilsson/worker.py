@@ -1,7 +1,8 @@
 import logging
+
 from irken.dispatch import handler
 
-from hnilsson.base import HardyConnection, HardyQueueConsumer
+from hnilsson.base import HardyMixin, HardyQueueConsumer
 from hnilsson.protocol import Job
 
 logger = logging.getLogger("hnilsson.worker")
@@ -17,7 +18,7 @@ class HardyWorkerQueueConsumer(HardyQueueConsumer):
     def dispatch(self, cmd, *args, **kwds):
         return self.conn.dispatch(cmd, *args, **kwds)
 
-class HardyWorker(HardyConnection):
+class HardyWorker(HardyMixin):
     make_io = staticmethod(lambda: None)
     make_queue_consumer = lambda self: HardyWorkerQueueConsumer(self)
     queue_out_name = "master"
@@ -39,12 +40,14 @@ class HardyWorker(HardyConnection):
     def dispatch(self, *args, **kwds):
         return super(HardyWorker, self).dispatch(*args, **kwds) + 1
 
-    @handler("irc cmd privmsg")
-    def hello_world(self, cmd, target_name, text):
-        cmd.source.i = getattr(cmd.source, "i", 0) + 1
-        print cmd.source, cmd.source.i, text
+from irken.base import BaseConnection
+from irken.dispatch import BaseDispatchMixin
+from irken.ctcp import CTCPDispatchMixin
 
-def main(pid, cls=HardyWorker):
+bases = (HardyWorker, CTCPDispatchMixin, BaseDispatchMixin, BaseConnection)
+HardyWorkerConnection = type("HardyWorkerConnection", bases, {})
+
+def main(pid, cls=HardyWorkerConnection):
     w = cls(pid)
     w.config.setup_logging()
     w.run()

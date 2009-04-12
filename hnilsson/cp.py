@@ -7,9 +7,9 @@ import urllib2
 from BeautifulSoup import BeautifulSoup
 from irken.dispatch import handler
 
-from hnilsson.worker import HardyWorker
+from hnilsson.worker import HardyWorkerConnection
 
-class CommonPeople(HardyWorker):
+class CommonPeople(HardyWorkerConnection):
     greeting = filter(None, map(lambda v: v.strip().decode("utf-8"),
 """
 det här är min tredje vecka på fredagsbilagan.
@@ -27,7 +27,7 @@ common people är indie. indiepop.
     @property
     def client_version(self):
         reffn = ".git/refs/heads/master"
-        rv = "irken example bot"
+        rv = "hardy-nilsson worker " + str(os.getpid())
         if os.path.exists(reffn):
             rev = open(reffn, "U").read().rstrip("\n")
             rv += " (master is %s)" % rev
@@ -49,6 +49,11 @@ common people är indie. indiepop.
                 title = self._get_title(url_text)
                 self.send_cmd(None, "PRIVMSG", (reply_to.nick, title))
 
+    @handler("irc cmd privmsg")
+    def print_msg(self, cmd, target_name, text):
+        cmd.source.i = getattr(cmd.source, "i", 0) + 1
+        print "< %s #%03d> %s" % (cmd.source.nick, cmd.source.i, text)
+
     def _is_allowed_url(self, url_text):
         url = urlparse.urlsplit(url_text)
         for allowed in self.allowable_domains:
@@ -66,4 +71,5 @@ common people är indie. indiepop.
 if __name__ == "__main__":
     import sys
     from hnilsson.worker import main
+    __import__("pprint").pprint(CommonPeople("1").evtable)
     main(sys.argv[1], cls=CommonPeople)

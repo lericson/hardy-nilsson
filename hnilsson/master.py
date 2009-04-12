@@ -1,7 +1,7 @@
 import os
 import threading
 
-from irken import BaseMixin, bases
+import irken
 from irken.dispatch import handler
 
 from hnilsson.base import HardyMixin, HardyQueueConsumer
@@ -15,7 +15,7 @@ class HardyMasterQueueConsumer(HardyQueueConsumer):
         prefix, cmd = fw_cmd
         self.conn.send_cmd(prefix, cmd, fw_args)
 
-class HardyMaster(BaseMixin, HardyMixin):
+class HardyMaster(irken.BaseMixin, HardyMixin):
     queue_out_name = "workers"
     queue_in_name = "master"
 
@@ -46,7 +46,10 @@ class HardyMaster(BaseMixin, HardyMixin):
     def stop(self):
         self.queue_consumer.running = False
 
-bases = (HardyMaster,) + bases
+bases = (HardyMaster,) + irken.bases
+from irken.ctcp import CTCPDispatchMixin, BaseCTCPDispatchMixin
+bs_mp = {CTCPDispatchMixin: None}
+bases = tuple(bs_mp.get(b, b) for b in bases if bs_mp.get(b, b))
 HardyMasterConnection = type("HardyMasterConnection", bases, {})
 
 def main(cls=HardyMasterConnection):

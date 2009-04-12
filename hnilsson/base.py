@@ -4,6 +4,7 @@ import beanstalkc
 import irken
 from irken.nicks import Mask
 from irken.dispatch import DispatchRegistering, Command, handler
+from irken.io import BaseIO
 
 from hnilsson import load_config
 from hnilsson.protocol import Job
@@ -41,14 +42,6 @@ class HardyQueueConsumer(DispatchRegistering):
     def warn_unhandled(self, cmd, unhandled, args, kwds):
         logger.warn("unhandled job: %r", (unhandled, args, kwds))
 
-from irken.base import BaseConnection
-from irken.dispatch import BaseDispatchMixin
-from irken.ctcp import CTCPDispatchMixin
-from irken.io import BaseIO
-
-bases = (CTCPDispatchMixin, BaseDispatchMixin, BaseConnection)
-HardyBaseConnection = type("HardyBaseConnection", bases, {})
-
 class HardyMixin(object):
     make_io = BaseIO
     client_version = "hardy-nilsson"
@@ -75,6 +68,3 @@ class HardyMixin(object):
     def send_job(self, job):
         logger.debug("send: %r", job)
         self.queue_conn.put(job.as_str())
-
-class HardyConnection(HardyMixin, HardyBaseConnection):
-    pass
