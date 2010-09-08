@@ -1,4 +1,5 @@
 # This is where I put all the really specific stuff.
+# encoding: utf-8
 import os
 import re
 import urlparse
@@ -33,21 +34,25 @@ common people är indie. indiepop.
             rv += " (master is %s)" % rev
         return rv
 
-    @handler("irc cmd join")
-    def say_greeting(self, cmd, target_name):
-        if cmd.source == self:
-            for line in self.greeting:
-                self.send_cmd(None, "PRIVMSG", (target_name, line))
+    #@handler("irc cmd join")
+    #def say_greeting(self, cmd, target_name):
+    #    if cmd.source == self:
+    #        for line in self.greeting:
+    #            self.send_cmd(None, "PRIVMSG", (target_name, line))
 
     @handler("irc cmd privmsg")
     def say_html_title(self, cmd, target_name, text):
-        reply_to = self.lookup_prefix((target_name,))
-        if reply_to == self:
-            reply_to = cmd.source
+        tell = cmd.source.nick if target_name.startswith("#") else None
+        # XXX The bot needs to know its nickname for this to work.
+        #reply_to = cmd.source if target_name == self.nick else target_name
+        origin = target_name if target_name.startswith("#") else cmd.source.nick
         for url_text in self.url_re.findall(text):
-            if self._is_allowed_url(url_text):
-                title = self._get_title(url_text)
-                self.send_cmd(None, "PRIVMSG", (reply_to.nick, title))
+            if not self._is_allowed_url(url_text):
+                continue
+            title = self._get_title(url_text)
+            msg = "%s is %s" % (url_text, title.strip())
+            msg = "%s: %s" % (tell, msg) if tell else msg
+            self.send_cmd(None, "PRIVMSG", (origin, msg))
 
     @handler("irc cmd privmsg")
     def print_msg(self, cmd, target_name, text):
@@ -66,7 +71,11 @@ common people är indie. indiepop.
         return False
 
     def _get_title(self, url):
-        return BeautifulSoup(urllib2.urlopen(url)).title.string
+        rv = BeautifulSoup(urllib2.urlopen(url)).title.string
+        rv = reduce(lambda v, w: v.replace(w, " "), "\r\n\t", rv)
+        while "  " in rv:
+            rv = rv.replace("  ", " ")
+        return rv
 
 if __name__ == "__main__":
     import sys
