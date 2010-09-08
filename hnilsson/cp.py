@@ -21,7 +21,7 @@ common people är inte slitz.
 common people är inte tracks.
 common people är indie. indiepop.
 """.split("\n")))
-    allowable_domains = "youtube.com", "php.net"
+    allowable_domains = "youtube.com", "php.net", "collegehumor.com"
     url_re = re.compile(r"\b(https?://.+?\..+?/.+?)(?:$| )", re.I)
 
     @property
